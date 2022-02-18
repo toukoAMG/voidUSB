@@ -4,16 +4,20 @@ grn="\e[0;32m"
 def="\e[0m"
 
 echo -e "${grn}Welcome to voidUSB!"
-if [ $_conf = false ]; then
-		echo -e "${def}To start off, edit the voidusb.conf file to your liking."
-		exit 0
-fi
+#if [ $_conf = false ]; then
+#		echo -e "${def}To start off, edit the voidusb.conf file to your liking."
+#		exit 0
+#fi
 
 function usbchk {
-		export stat=$(file -s "$_device""1")
-		export stati=$(file -s "$_device""2") #an additional check for partition 2 just to be sure
-		if [[ $stat = *"no read permission"* ]] && [[ $stati = *"no read permission"* ]]; then
-				echo "${grn}Device ($_device) contains data. Is this the correct device?"
+		file -s "${_device}1" > .voidusb #i cannot get bash to get it to work while set as a variable
+		file -s "${_device}2" >> .voidusb #an additional check for partition 2 just to be sure
+		stat=$(cat .voidusb)
+		if [[ $stat = *"no read permission"* ]]; then
+				echo -e "${grn}Device $_device contains data. Is this the correct device?"
+				rm .voidusb
+				exit 0
+		fi
+		rm .voidusb
 }
 
-usbchk
