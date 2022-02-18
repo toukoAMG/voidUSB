@@ -1,0 +1,19 @@
+#!/bin/bash
+source voidusb.conf
+grn="\e[0;32m"
+def="\e[0m"
+
+echo -e "${grn}Welcome to voidUSB!"
+if [ $_conf = false ]; then
+		echo -e "${def}To start off, edit the voidusb.conf file to your liking."
+		exit 0
+fi
+
+function usbchk {
+		export stat=$(file -s "$_device""1")
+		export stati=$(file -s "$_device""2") #an additional check for partition 2 just to be sure
+		if [[ $stat = *"no read permission"* ]] && [[ $stati = *"no read permission"* ]]; then
+				echo "${grn}Device ($_device) contains data. Is this the correct device?"
+}
+
+usbchk
