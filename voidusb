@@ -22,21 +22,18 @@ function usbchk {
 }
 
 function partition {
-		echo -e "${grn}Partitioning USB... Password prompt incoming!${def}"
 		echo 'label: gpt' | sudo sfdisk $_device
 		echo '${_device}1: start=2048, size=262144, type=C12A7328-F81F-11D2-BA4B-00A0C93EC93B,bootable, name="EFI"' >> .voidusb #EFI boot partition
 		echo '${_device}2: start=264192, size=786432, type=L, name="Boot"' >> .voidusb #boot partition as grub does not like f2fs with compression
 		echo '${_device}3: start=1050624,type=L, name="Root"' >> .voidusb #rest as /
-		sudo sfdisk $_device < .voidusb #i think this is the only way sfdisk works
+		sudo sfdisk -q $_device < .voidusb #i think this is the only way sfdisk works
 		rm .voidusb
 		sudo mkfs.fat -F32 ${_device}1
-		sudo mkfs.ext4 ${_device}2
-		sudo mkfs.f2fs -O extra_attr,inode_checksum,sb_checksum,compression ${_device}3 #https://wiki.archlinux.org/title/F2FS#Compression, will give us a performance increase and reduce wear on the USB
-		echo -e "Partitions prepared."
+		sudo mkfs.ext4 -F -q ${_device}2
+		sudo mkfs.f2fs -f -q -O extra_attr,inode_checksum,sb_checksum,compression ${_device}3 #https://wiki.archlinux.org/title/F2FS#Compression, will give us a performance increase and reduce wear on the USB
 }
 
 function tarstrap { #anyone want to add an option to install via XBPS for people who can install xbps?
-		echo -e "${grn}Preparing devices... Password prompt incoming!${def}"
 		mkdir -p void
 		sudo mount -o compress_algorithm=zstd:9,compress_chksum,whint_mode=fs-based,atgc,gc_merge,lazytime ${_device}3 ./void
 		sudo mkdir -p ./void/boot
@@ -44,40 +41,37 @@ function tarstrap { #anyone want to add an option to install via XBPS for people
 		sudo mkdir -p ./void/boot/efi
 		sudo mount ${_device}1 ./void/boot/efi
 		#install void via rootfs
-		if [ $_libc = glibc ]
+		if [ $_libc = glibc ]; then
 				tarname=void-x86_64-ROOTFS-20210930.tar.xz
 		else #select musl if glibc is not selected
 				tarname=void-x86_64-musl-ROOTFS-20210930.tar.xz
 		fi
 		echo -e "${grn}Downloading Void ROOTFS...${def}" && cd void
-		wget https://alpha.de.repo.voidlinux.org/live/current/$tarname
-		tar xpvf $tarname --xattrs-include='*.*' --numeric-owner #https://wiki.gentoo.org/wiki/Handbook:AMD64/Full/Installation#Unpacking_the_stage_tarball
-		rm $tarname
+		sudo curl -O https://alpha.de.repo.voidlinux.org/live/current/$tarname
+		sudo tar xpf $tarname --xattrs-include='*.*' --numeric-owner #https://wiki.gentoo.org/wiki/Handbook:AMD64/Full/Installation#Unpacking_the_stage_tarball
+		sudo rm $tarname
 }
 
-function chroot {
+function prepchroot {
+		cd void && sudo cp --dereference /etc/resolv.conf ./void/etc
+		sudo mount --types proc /proc ./proc
+		sudo mount --rbind /sys ./sys
+		sudo mount --rbind /dev ./dev
+		sudo cp ../voidusb ./tmp/voidusb
+}
+
+if [ "$1" = "chroot" ]; then
+		#stuff in chroot
+		exit 0
+else
+		usbchk
+		echo -e "${grn}Partitioning USB... Password prompt incoming!${def}"
+		partition
+		echo -e "${grn}Partitions prepared."
+		echo -e "Preparing devices... Password prompt incoming!${def}"
+		tarstrap
 		echo -e "${grn}Entering a chroot... Password prompt incoming!${def}"
-		cd .voidusb && sudo cp --dereference /etc/resolv.conf ./void/etc
-		mount --types proc /proc ./proc
-		mount --rbind /sys ./sys
-		mount --rbind /dev ./dev
-		
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+		prepchroot
+		echo -e "${grn}Stage 1 complete, relaunching script in chroot mode...${def}"
+		sudo chroot 
+fi

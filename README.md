@@ -12,7 +12,7 @@ bash (don't know if pure sh or others work, zsh probably will though)
 dosfstools (to make EFI system partition)
 e2fsprogs (ext4 boot partition)
 f2fs-tools (for the USB oriented f2fs filesystem)
-wget
+curl
 tar
 ```
 
