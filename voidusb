@@ -2,9 +2,9 @@
 grn="\e[0;32m"
 def="\e[0m"
 
-echo -e "${grn}Welcome to voidUSB!"
+source voidusb.conf
 if [ "$1" != "chroot" ]; then
-		source voidusb.conf
+		echo -e "${grn}Welcome to voidUSB!"
 		if [ $_conf = false ]; then
 				echo -e "${def}To start off, edit the voidusb.conf file to your liking."
 				exit 0
@@ -60,6 +60,7 @@ function prepchroot {
 		sudo mount --rbind /sys ./sys
 		sudo mount --rbind /dev ./dev
 		sudo cp ../voidusb ./tmp/voidusb
+		sudo cp ../voidusb.conf ./tmp/voidusb.conf
 }
 
 function tarchroot { #want this separate in case of XBPS install method
@@ -90,6 +91,13 @@ function bootloader {
 		xbps-install -y grub-x86_64-efi
 		grub-install --target=x86_64-efi --boot-directory=/boot --efi-directory=/boot/efi --removable --bootloader-id="voidUSB"
 		grub-mkconfg -o /boot/grub/grub.cfg
+}
+
+function servicesetup {
+		ln -s /etc/sv/dbus /var/service
+		ln -s /etc/sv/dhcpcd /var/service
+		ln -s /etc/sv/sulogin /var/service
+		#can't think of any others
 }
 
 if [ "$1" = "chroot" ]; then
