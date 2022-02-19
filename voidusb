@@ -1,12 +1,14 @@
 #!/bin/bash
-source voidusb.conf
 grn="\e[0;32m"
 def="\e[0m"
 
 echo -e "${grn}Welcome to voidUSB!"
-if [ $_conf = false ]; then
-		echo -e "${def}To start off, edit the voidusb.conf file to your liking."
-		exit 0
+if [ "$1" != "chroot" ]; then
+		source voidusb.conf
+		if [ $_conf = false ]; then
+				echo -e "${def}To start off, edit the voidusb.conf file to your liking."
+				exit 0
+		fi
 fi
 
 function usbchk {
@@ -22,7 +24,7 @@ function usbchk {
 }
 
 function partition {
-		echo 'label: gpt' | sudo sfdisk $_device
+		echo 'label: gpt' | sudo sfdisk -q $_device
 		echo '${_device}1: start=2048, size=262144, type=C12A7328-F81F-11D2-BA4B-00A0C93EC93B,bootable, name="EFI"' >> .voidusb #EFI boot partition
 		echo '${_device}2: start=264192, size=786432, type=L, name="Boot"' >> .voidusb #boot partition as grub does not like f2fs with compression
 		echo '${_device}3: start=1050624,type=L, name="Root"' >> .voidusb #rest as /
@@ -53,7 +55,7 @@ function tarstrap { #anyone want to add an option to install via XBPS for people
 }
 
 function prepchroot {
-		cd void && sudo cp --dereference /etc/resolv.conf ./void/etc
+		sudo cp --dereference /etc/resolv.conf ./etc
 		sudo mount --types proc /proc ./proc
 		sudo mount --rbind /sys ./sys
 		sudo mount --rbind /dev ./dev
@@ -73,5 +75,5 @@ else
 		echo -e "${grn}Entering a chroot... Password prompt incoming!${def}"
 		prepchroot
 		echo -e "${grn}Stage 1 complete, relaunching script in chroot mode...${def}"
-		sudo chroot 
+		sudo chroot ./ ./tmp/voidusb chroot
 fi
