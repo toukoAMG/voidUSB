@@ -62,9 +62,43 @@ function prepchroot {
 		sudo cp ../voidusb ./tmp/voidusb
 }
 
+function tarchroot { #want this separate in case of XBPS install method
+		xbps-install -y -Su xbps
+		xbps-install -y -u
+		xbps-install -y base-system
+		xbps-remove -y base-voidstrap
+}
+
+function localisation {
+		if [ "$_libc" = "glibc" ]; then #locale setup
+				echo "${_locale}.UTF-8 UTF-8" >> /etc/default/libc-locales
+				xbps-reconfigure -f glibc-locales
+		fi
+		echo $_hostname > /etc/hostname
+		echo "LANG=${_locale}.UTF-8" > /etc/locale.conf #idk if this has an effect on musl but eh
+		ln -sf /usr/share/zoneinfo/$timez /etc/localtime
+		if [ "$_clock" = "NTP" ]; then
+				echo "HARDWARECLOCK=localtime" >> /etc/rc.conf #as a backup
+				xbps-install -y openntpd
+				ln -s /etc/sv/ntpd /var/service
+		elif [ "$_clock" = "localtime" ]; then
+				echo "HARDWARECLOCK=localtime" >> /etc/rc.conf
+		fi
+}
+
+function bootloader {
+		xbps-install -y grub-x86_64-efi
+		grub-install --target=x86_64-efi --boot-directory=/boot --efi-directory=/boot/efi --removable --bootloader-id="voidUSB"
+		grub-mkconfg -o /boot/grub/grub.cfg
+}
+
 if [ "$1" = "chroot" ]; then
-		#stuff in chroot
-		exit 0
+		echo -e "${grn}Chroot entered!, seting up system.${def}"
+		tarchroot
+		localisation
+		bootloader
+		xbps-install -y $_pkgs
+		echo -e "${grn}Setup complete, voidUSB has been successfully installed on ${_device}!${def}"
 else
 		usbchk
 		echo -e "${grn}Partitioning USB... Password prompt incoming!${def}"
