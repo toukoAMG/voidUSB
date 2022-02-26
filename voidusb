@@ -1,4 +1,5 @@
 #!/bin/bash
+_root=$(pwd)
 def="\e[0m"
 grn="\e[1;34m"
 if [ "$1" != "chroot" ]; then
@@ -91,7 +92,7 @@ function bootloader {
 		xbps-install -y grub-x86_64-efi
 		grub-install --target=x86_64-efi --boot-directory=/boot --efi-directory=/boot/efi --removable --bootloader-id="voidUSB"
 		grub-mkconfig -o /boot/grub/grub.cfg
-}
+}s
 
 function servicesetup {
 		ln -s /etc/sv/dbus /etc/runit/runsvdir/default/
@@ -101,16 +102,9 @@ function servicesetup {
 }
 
 function mkfstab {
-		cat /proc/mounts | grep "${_device}3" >> /etc/fstab
-		_uuid=$(blkid -s UUID -o value "${_device}3")
-		sed -e 's/"${_device}3".*$/"${_device}3" ${_uuid}/g'
-		cat /proc/mounts | grep "${_device}2" >> /etc/fstab
-		_uuid=$(blkid -s UUID -o value "${_device}2")
-		sed -e 's/"${_device}2".*$/"${_device}2" ${_uuid}/g'
-		cat /proc/mounts | grep "${_device}1" >> /etc/fstab
-		_uuid=$(blkid -s UUID -o value "${_device}1")
-		sed -e 's/"${_device}1".*$/"${_device}1" ${_uuid}/g'
-		#someone help, also has to be done in this order
+		curl -O https://raw.githubusercontent.com/glacion/genfstab/master/genfstab
+		chmod +x genfstab && cd $_root
+		./genfstab -U ./void >> ./void/etc/fstab
 }
 
 if [ "$1" = "chroot" ]; then
@@ -129,7 +123,6 @@ if [ "$1" = "chroot" ]; then
 		localisation
 		bootloader
 		servicesetup
-		#mkfstab
 		xbps-install -y $_pkgs neofetch
 		xbps-reconfigure -fa
 		echo -e "${grn}Setup complete, voidUSB has been successfully installed on ${_device}!${def}"
@@ -139,10 +132,12 @@ else
 		echo -e "${grn}Partitioning USB... Password prompt incoming!${def}"
 		partition
 		echo -e "${grn}Partitions prepared."
-		echo -e "Preparing devices...${def}"
+		echo -e "${grn}Bootstrapping Void Linux tarball...${def}"
 		tarstrap
-		echo -e "${grn}Entering a chroot...${def}"
+		echo -e "${grn}Preparing a chroot environment...${def}"
 		prepchroot
+		echo -e "${grn}Generating fstab...${def}"
+		mkfstab
 		echo -e "${grn}Stage 1 complete, relaunching script in chroot mode...${def}"
 		sudo chroot ./ ./tmp/voidusb chroot
 fi
