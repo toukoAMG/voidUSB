@@ -90,13 +90,13 @@ function localisation {
 function bootloader {
 		xbps-install -y grub-x86_64-efi
 		grub-install --target=x86_64-efi --boot-directory=/boot --efi-directory=/boot/efi --removable --bootloader-id="voidUSB"
-		grub-mkconfg -o /boot/grub/grub.cfg
+		grub-mkconfig -o /boot/grub/grub.cfg
 }
 
 function servicesetup {
-		ln -s /etc/sv/dbus /var/service
-		ln -s /etc/sv/dhcpcd /var/service
-		ln -s /etc/sv/sulogin /var/service
+		ln -s /etc/sv/dbus /etc/runit/runsvdir/default/
+		ln -s /etc/sv/dhcpcd /etc/runit/runsvdir/default/
+		ln -s /etc/sv/sulogin /etc/runit/runsvdir/default/
 		#can't think of any others
 }
 
@@ -129,7 +129,7 @@ if [ "$1" = "chroot" ]; then
 		localisation
 		bootloader
 		servicesetup
-		mkfstab
+		#mkfstab
 		xbps-install -y $_pkgs neofetch
 		xbps-reconfigure -fa
 		echo -e "${grn}Setup complete, voidUSB has been successfully installed on ${_device}!${def}"
