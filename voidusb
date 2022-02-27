@@ -43,7 +43,7 @@ function tarstrap { #anyone want to add an option to install via XBPS for people
 		sudo mount ${_device}2 ./void/boot
 		sudo mkdir -p ./void/boot/efi
 		sudo mount ${_device}1 ./void/boot/efi
-	#install void via rootfs
+		#install void via rootfs
 		if [ $_libc = glibc ]; then
 				tarname=void-x86_64-ROOTFS-20210930.tar.xz
 		else #select musl if glibc is not selected
@@ -56,7 +56,7 @@ function tarstrap { #anyone want to add an option to install via XBPS for people
 }
 
 function prepchroot {
-		sudo cp --dereference /etc/resolv.conf ./etc
+		sudo cp --dereference /etc/resolv.conf ./etc/resolv.conf
 		sudo mount --types proc /proc ./proc
 		sudo mount --rbind /sys ./sys
 		sudo mount --rbind /dev ./dev
@@ -92,7 +92,7 @@ function bootloader {
 		xbps-install -y grub-x86_64-efi
 		grub-install --target=x86_64-efi --boot-directory=/boot --efi-directory=/boot/efi --removable --bootloader-id="voidUSB"
 		grub-mkconfig -o /boot/grub/grub.cfg
-}s
+}
 
 function servicesetup {
 		ln -s /etc/sv/dbus /etc/runit/runsvdir/default/
@@ -102,28 +102,40 @@ function servicesetup {
 }
 
 function mkfstab {
-		curl -O https://raw.githubusercontent.com/glacion/genfstab/master/genfstab
-		chmod +x genfstab && cd $_root
-		./genfstab -U ./void >> ./void/etc/fstab
+		sudo curl -O https://raw.githubusercontent.com/rangerAMG/genfstab/master/genfstab
+		sudo chmod +x genfstab
+		sudo bash -c "cd ${_root} && ./void/genfstab -U ./void >> ./void/etc/fstab"
+}
+
+function shell {
+		if [ "$_shell" = "fish" ]; then
+				xbps-install fish-shell
+		else
+				xbps-install $_shell
+		fi	
+		chsh -s $(which ${_shell})
+}
+
+function usercreation {
+		echo -e "${grn}Creating user.${def}"
+		useradd -s $_shell -G video,wheel,audio,input,cdrom $_user
+		echo -e "${grn}Password for ${_realuser}?${def}"
+		passwd $_user
 }
 
 if [ "$1" = "chroot" ]; then
 		source /tmp/voidusb.conf
 		echo -e "${grn}Chroot entered, create a password for root.${def}"
 		passwd
-		chsh -s $(which ${_shell})
 		if [ "$_cruser" = "tru" ]; then
-				echo -e "${grn}Creating user.${def}"
-				useradd -s $_shell -G video,wheel,audio,input,cdrom $_user
-				echo -e "${grn}Password for ${_realuser}?${def}"
-				passwd $_user
+				usercreation
 		fi
 		echo -e "${grn}Setting up system.${def}"
 		tarchroot
 		localisation
 		bootloader
 		servicesetup
-		xbps-install -y $_pkgs neofetch
+		xbps-install -y ${_pkgs} neofetch
 		xbps-reconfigure -fa
 		echo -e "${grn}Setup complete, voidUSB has been successfully installed on ${_device}!${def}"
 		neofetch
@@ -134,10 +146,10 @@ else
 		echo -e "${grn}Partitions prepared."
 		echo -e "${grn}Bootstrapping Void Linux tarball...${def}"
 		tarstrap
-		echo -e "${grn}Preparing a chroot environment...${def}"
-		prepchroot
 		echo -e "${grn}Generating fstab...${def}"
 		mkfstab
+		echo -e "${grn}Preparing a chroot environment...${def}"
+		prepchroot
 		echo -e "${grn}Stage 1 complete, relaunching script in chroot mode...${def}"
 		sudo chroot ./ ./tmp/voidusb chroot
 fi
