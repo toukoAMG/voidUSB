@@ -12,6 +12,16 @@ if [ "$1" != "chroot" ]; then
 		fi
 fi
 
+function depchecker {
+		deps="mkfs.fat mkfs.ext4 mkfs.f2fs curl tar sfdisk"
+		for n in $deps; do
+				if ! command -v $n &> /dev/null; then
+						echo -e "${grn}${n} could not be found. Install it through your package manager.${def}"
+						exit 0
+				fi
+		done
+}
+
 function usbchk {
 		file -s "${_device}1" > .voidusb #i cannot get bash to get it to work while set as a variable
 		file -s "${_device}2" >> .voidusb #an additional check for partition 2 just to be sure
@@ -140,6 +150,8 @@ if [ "$1" = "chroot" ]; then
 		echo -e "${grn}Setup complete, voidUSB has been successfully installed on ${_device}!${def}"
 		neofetch
 else
+		depchecker
+		echo -e "${grn}Checking if dependencies are installed...${def}"
 		usbchk
 		echo -e "${grn}Partitioning USB... Password prompt incoming!${def}"
 		partition
