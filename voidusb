@@ -13,7 +13,7 @@ if [ "$1" != "chroot" ]; then
 fi
 
 function depchecker {
-		deps="mkfs.fat mkfs.ext4 mkfs.f2fs curl tar sfdisk"
+		deps="mkfs.fat mkfs.ext4 mkfs.f2fs curl tar sfdisk xz"
 		for n in $deps; do
 				if ! command -v $n &> /dev/null; then
 						echo -e "${grn}${n} could not be found. Install it through your package manager.${def}"
@@ -137,7 +137,7 @@ if [ "$1" = "chroot" ]; then
 		source /tmp/voidusb.conf
 		echo -e "${grn}Chroot entered, create a password for root.${def}"
 		passwd
-		if [ "$_cruser" = "tru" ]; then
+		if [ "$_cruser" = "true" ]; then
 				usercreation
 		fi
 		echo -e "${grn}Setting up system.${def}"
