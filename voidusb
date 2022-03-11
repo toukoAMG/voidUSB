@@ -1,17 +1,10 @@
 #!/bin/bash
 _root=$(pwd)
+set -e # stop script at error, useful for debugging
 def="\e[0m"
 grn="\e[1;34m"
-if [ "$1" != "chroot" ]; then
-		grn="\e[1;32m"
-		source voidusb.conf
-		echo -e "${grn}Welcome to voidUSB!"
-		if [ $_conf = false ]; then
-				echo -e "${def}To start off, edit the voidusb.conf file to your liking."
-				exit 0
-		fi
-fi
 
+#make sure the functions get loaded first for the run flag
 function depchecker {
 		deps="mkfs.fat mkfs.ext4 mkfs.f2fs curl tar sfdisk xz"
 		for n in $deps; do
@@ -132,6 +125,20 @@ function usercreation {
 		echo -e "${grn}Password for ${_realuser}?${def}"
 		passwd $_user
 }
+
+if [ "$1" != "chroot" ]; then
+		grn="e[1;32m"
+		source voidusb.conf
+		if [ "$1" = "run" ]; then
+				$2
+				exit 0
+		fi
+		echo -e "${grn}Welcome to voidUSB!"
+		if [ $_conf = false ]; then
+				echo -e "${def}To start off, edit the voidusb.conf file to your liking."
+				exit 0
+		fi
+fi
 
 if [ "$1" = "chroot" ]; then
 		source /tmp/voidusb.conf

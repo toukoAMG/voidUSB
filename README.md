@@ -30,4 +30,4 @@ vim voidusb.conf # or use your text editor of choice, gedit/kate is normally goo
 * A fully portable version (Option could be toggled via command line flags)
 * Different filesystem and maybe OS support (Artix and Gentoo anyone?)
 * Add an option to install a GUI (I would prefer lightdm and budgie-desktop)
-* Launch the separate functions with ./voidusb run mkfstab
+* !!DONE!! ~~Launch the separate functions with ./voidusb run mkfstab~~
