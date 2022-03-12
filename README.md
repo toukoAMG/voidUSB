@@ -19,8 +19,7 @@ xz
 ## Installation/Usage
 It's as simple as running a few commands (and editing a configuration file):
 ```
-git clone https://notabug.org/rangerAMG/voidUSB.git && cd voidUSB
-git checkout stable # or keep on master, however you likely will encounter issues if you do that
+git clone --branch stable https://notabug.org/rangerAMG/voidUSB.git && cd voidUSB # or keep on master by removing the --branch stable , however you likely will encounter issues if you do that
 vim voidusb.conf # or use your text editor of choice, gedit/kate is normally good for newbies
 ./voidusb
 ```
