@@ -1,5 +1,6 @@
 #!/bin/bash
 _root=$(pwd)
+ins=$(xbps-install -y)
 set -e # stop script at error, useful for debugging
 def="\e[0m"
 grn="\e[1;34m"
@@ -70,7 +71,7 @@ function prepchroot {
 function tarchroot { #want this separate in case of XBPS install method
 		xbps-install -y -Su xbps
 		xbps-install -y -u
-		xbps-install -y base-system
+		xbps-install -y base-system void-repo-nonfree
 		xbps-remove -y base-voidstrap
 }
 
@@ -97,13 +98,6 @@ function bootloader {
 		grub-mkconfig -o /boot/grub/grub.cfg
 }
 
-function servicesetup {
-		ln -s /etc/sv/dbus /etc/runit/runsvdir/default/
-		ln -s /etc/sv/dhcpcd /etc/runit/runsvdir/default/
-		ln -s /etc/sv/sulogin /etc/runit/runsvdir/default/
-		#can't think of any others
-}
-
 function mkfstab {
 		sudo curl -O https://raw.githubusercontent.com/rangerAMG/genfstab/master/genfstab
 		sudo chmod +x genfstab
@@ -125,17 +119,34 @@ function usercreation {
 		echo -e "${grn}Password for ${_realuser}?${def}"
 		passwd $_user
 		echo -e "${grn}Adding sudoers rules for user"
-		sudo sed -Ei 's/^#(%wheel.*ALL.*)/\1/' /etc/sudoers
+		sudo sed -Ei 's/^#(%wheel.*ALL.*)/\1/' /etc/sudoers # this actually works for some reason
 }
 
 function drivers {
+		if [ "$_dri" = "intel" ]; then
+				$ins mesa-dri vulkan-loader mesa-vulkan-intel intel-video-accel	intel-ucode
+		elif [ "$_dri" = "amd" ]; then
+				$ins mesa-dri vulkan-loader mesa-vulkan-radeon xf86-video-amdgpu xf86-video-ati mesa-vaapi mesa-vdpau
+		elif [ "$_dri" = "nvidia-prop" ]; then # so no card detection yet for older drivers which perform better on different cards but maybe later
+				$ins nvidia
+				if [ "$_libc" = "glibc" ]; then
+						$ins nvidia-libs-32bit
+				fi
+		elif [ "$_dri" = "nvidia" ]; then 
+				$ins mesa-dri xf86-video-nouveau
+				if [ "$_libc" = "glibc" ]; then
+						$ins mesa-dri-32bit
+				fi
+		else
+				echo -e "${grn}Driver was not chosen correctly, skipping...${def}"
+		fi
 }
 
 function setupgui {
 		drivers
 		xbps-install -y lightdm lightdm-gtk3-greeter xorg budgie-desktop tilix nemo elogind xdg-user-dirs-gtk gnome-control-center pipewire bluez papirus-icon-theme papirus-folders
 		rm /etc/runit/runsvdir/default/dhcpcd
-		services="elogind lightdm pipewire bluetoothd NetworkManager"
+		services="elogind lightdm pipewire bluetoothd NetworkManager dbus"
 		for n in $services; do
 			ln -s /etc/sv/${n} /etc/runit/runsvdir/default/
 		done
@@ -169,7 +180,6 @@ if [ "$1" = "chroot" ]; then
 		tarchroot
 		localisation
 		bootloader
-		servicesetup
 		xbps-install -y ${_pkgs} neofetch
 		xbps-reconfigure -fa
 		echo -e "${grn}Setup complete, voidUSB has been successfully installed on ${_device}!${def}"
