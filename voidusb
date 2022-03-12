@@ -1,6 +1,6 @@
 #!/bin/bash
 _root=$(pwd)
-ins=$($xi)
+ins="xbps-install -y"
 set -e # stop script at error, useful for debugging
 def="\e[0m"
 grn="\e[1;34m"
@@ -69,9 +69,9 @@ function prepchroot {
 }
 
 function tarchroot { #want this separate in case of XBPS install method
-		$xi -Su xbps
-		$xi -u
-		$xi base-system void-repo-nonfree
+		$ins -Su xbps
+		$ins -u
+		$ins base-system void-repo-nonfree
 		xbps-remove -y base-voidstrap
 }
 
@@ -85,7 +85,7 @@ function localisation {
 		ln -sf /usr/share/zoneinfo/$timez /etc/localtime
 		if [ "$_clock" = "NTP" ]; then
 				echo "HARDWARECLOCK=localtime" >> /etc/rc.conf #as a backup
-				$xi openntpd
+				$ins openntpd
 				ln -s /etc/sv/ntpd /var/service
 		elif [ "$_clock" = "localtime" ]; then
 				echo "HARDWARECLOCK=localtime" >> /etc/rc.conf
@@ -93,7 +93,7 @@ function localisation {
 }
 
 function bootloader {
-		$xi grub-x86_64-efi
+		$ins grub-x86_64-efi
 		grub-install --target=x86_64-efi --boot-directory=/boot --efi-directory=/boot/efi --removable --bootloader-id="voidUSB"
 		grub-mkconfig -o /boot/grub/grub.cfg
 }
@@ -106,9 +106,9 @@ function mkfstab {
 
 function shell {
 		if [ "$_shell" = "fish" ]; then
-				$xi fish-shell
+				$ins fish-shell
 		else
-				$xi $_shell
+				$ins $_shell
 		fi	
 		chsh -s $(command -v ${_shell})
 }
@@ -144,7 +144,7 @@ function drivers {
 
 function setupgui {
 		drivers
-		$xi curl wget lightdm lightdm-gtk3-greeter xorg budgie-desktop tilix nemo elogind xdg-user-dirs-gtk gnome-control-center pipewire wireplumber alsa-pipewire bluez papirus-icon-theme papirus-folders
+		$ins curl wget lightdm lightdm-gtk3-greeter xorg budgie-desktop tilix nemo elogind xdg-user-dirs-gtk gnome-control-center pipewire wireplumber alsa-pipewire bluez papirus-icon-theme papirus-folders
 		rm /etc/runit/runsvdir/default/dhcpcd #just incase
 		mkdir -p /etc/pipewire
 		curl -0 -s https://raw.githubusercontent.com/rangerAMG/voidUSB/files/pipewire.conf && mv pipewire.conf /etc/pipewire/
@@ -185,7 +185,7 @@ if [ "$1" = "chroot" ]; then
 		tarchroot
 		localisation
 		bootloader
-		$xi ${_pkgs} neofetch
+		$ins ${_pkgs} neofetch
 		xbps-reconfigure -fa
 		echo -e "${grn}Setup complete, voidUSB has been successfully installed on ${_device}!${def}"
 		neofetch
