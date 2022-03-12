@@ -1,5 +1,6 @@
 #!/bin/bash
 _root=$(pwd)
+ins=$(xbps-install -y)
 set -e # stop script at error, useful for debugging
 def="\e[0m"
 grn="\e[1;34m"
@@ -53,7 +54,7 @@ function tarstrap { #anyone want to add an option to install via XBPS for people
 				tarname=void-x86_64-musl-ROOTFS-20210930.tar.xz
 		fi
 		echo -e "${grn}Downloading Void ROOTFS...${def}" && cd void
-		sudo curl -O https://alpha.de.repo.voidlinux.org/live/current/$tarname
+		sudo curl -O https://alpha.de.repo.voidlinux.org/live/current/$tarname # not use the --silent flag here because it is a reasonably big download where you prabbly want to see the progress
 		sudo tar xpf $tarname --xattrs-include='*.*' --numeric-owner #https://wiki.gentoo.org/wiki/Handbook:AMD64/Full/Installation#Unpacking_the_stage_tarball
 		sudo rm $tarname
 }
@@ -93,19 +94,12 @@ function localisation {
 
 function bootloader {
 		xbps-install -y grub-x86_64-efi
-		grub-install --target=x86_64-efi --boot-directory=/boot --efi-directory=/boot/efi --removable --bootloader-id="voidUSB"
+		grub-install --target=x86_64-efi --boot-directory=/boot --efi-directory=/boot/efi --removable --bootloader-id="voidUSB" # the --removable flag is very important for a bootable USB
 		grub-mkconfig -o /boot/grub/grub.cfg
 }
 
-function servicesetup {
-		ln -s /etc/sv/dbus /etc/runit/runsvdir/default/
-		ln -s /etc/sv/dhcpcd /etc/runit/runsvdir/default/
-		ln -s /etc/sv/sulogin /etc/runit/runsvdir/default/
-		#can't think of any others
-}
-
 function mkfstab {
-		sudo curl -O https://raw.githubusercontent.com/rangerAMG/genfstab/master/genfstab
+		sudo curl -O -s https://raw.githubusercontent.com/rangerAMG/genfstab/master/genfstab
 		sudo chmod +x genfstab
 		sudo bash -c "cd ${_root} && ./void/genfstab -U ./void >> ./void/etc/fstab"
 }
@@ -153,7 +147,6 @@ if [ "$1" = "chroot" ]; then
 		tarchroot
 		localisation
 		bootloader
-		servicesetup
 		xbps-install -y ${_pkgs} neofetch
 		xbps-reconfigure -fa
 		echo -e "${grn}Setup complete, voidUSB has been successfully installed on ${_device}!${def}"
