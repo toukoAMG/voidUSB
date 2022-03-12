@@ -128,22 +128,6 @@ function usercreation {
 		sudo sed -Ei 's/^#(%wheel.*ALL.*)/\1/' /etc/sudoers
 }
 
-function drivers {
-}
-
-function setupgui {
-		drivers
-		xbps-install -y lightdm lightdm-gtk3-greeter xorg budgie-desktop tilix nemo elogind xdg-user-dirs-gtk gnome-control-center pipewire bluez papirus-icon-theme papirus-folders
-		rm /etc/runit/runsvdir/default/dhcpcd
-		services="elogind lightdm pipewire bluetoothd NetworkManager"
-		for n in $services; do
-			ln -s /etc/sv/${n} /etc/runit/runsvdir/default/
-		done
-		curl -O https://github.com/rangerAMG/voidUSB/releases/download/v1.0-beta/Juno-ocean-v40.tar.xz
-		tar xpf Juno-ocean-v40.tar.xz -C /usr/share/themes/ && rm Juno-ocean-v40.tar.xz
-		su -c "gsettings set org.gnome.desktop.interface gtk-theme 'Juno-ocean-v40' && gsettings set org.gnome.desktop.wm.preferences theme 'Juno-ocean-v40' && gsettings set org.gnome.desktop.interface icon-theme 'Papirus-Dark'" $_user
-}
-
 if [ "$1" != "chroot" ]; then
 		grn="e[1;32m"
 		source voidusb.conf
