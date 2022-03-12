@@ -20,7 +20,7 @@ function usbchk {
 		file -s "${_device}2" >> .voidusb #an additional check for partition 2 just to be sure
 		stat=$(cat .voidusb)
 		if [[ $stat = *"no read permission"* ]]; then
-				echo -e "${grn}Device $_device contains data. Is this the correct device?"
+				echo -e "${grn}Device $_device contains data. Is this the correct device?${def}"
 				rm .voidusb
 				exit 0
 		fi
@@ -124,7 +124,7 @@ function usercreation {
 		useradd -s $_shell -G video,wheel,audio,input,cdrom $_user
 		echo -e "${grn}Password for ${_realuser}?${def}"
 		passwd $_user
-		echo -e "${grn}Adding sudoers rules for user"
+		echo -e "${grn}Adding sudoers rules for user${def}"
 		sudo sed -Ei 's/^#(%wheel.*ALL.*)/\1/' /etc/sudoers
 }
 
@@ -135,7 +135,7 @@ if [ "$1" != "chroot" ]; then
 				$2
 				exit 0
 		fi
-		echo -e "${grn}Welcome to voidUSB!"
+		echo -e "${grn}Welcome to voidUSB!${def}"
 		if [ $_conf = false ]; then
 				echo -e "${def}To start off, edit the voidusb.conf file to your liking."
 				exit 0
@@ -165,7 +165,7 @@ else
 		echo -e "${grn}Partitioning USB... Password prompt incoming!${def}"
 		partition
 		echo -e "${grn}Partitions prepared."
-		echo -e "${grn}Bootstrapping Void Linux tarball...${def}"
+		echo -e "Bootstrapping Void Linux tarball...${def}"
 		tarstrap
 		echo -e "${grn}Generating fstab...${def}"
 		mkfstab
