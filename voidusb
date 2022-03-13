@@ -178,7 +178,7 @@ if [ "$1" = "chroot" ]; then
 		source /tmp/voidusb.conf
 		echo -e "${grn}Chroot entered, create a password for root.${def}"
 		passwd
-		if [ "$_cruser" = "true" ]; then
+		if [ "$_cruser" ]; then
 				usercreation
 		fi
 		echo -e "${grn}Setting up system.${def}"
