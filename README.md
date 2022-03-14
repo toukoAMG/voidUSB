@@ -26,8 +26,8 @@ vim voidusb.conf # or use your text editor of choice, gedit/kate is normally goo
 
 ## To do list:
 * Add advanced customisation options
-* Add option to install via XBPS for distros that have XBPS available
+* !!DONE!! ~Add option to install via XBPS for distros that have XBPS available~~
 * A fully portable version (Option could be toggled via command line flags)
 * Different filesystem and maybe OS support (Artix and Gentoo anyone?)
-* Add an option to install a GUI (I would prefer lightdm and budgie-desktop)
+* !!DONE!! ~~Add an option to install a GUI (I would prefer lightdm and budgie-desktop)~~
 * !!DONE!! ~~Launch the separate functions with ./voidusb run mkfstab~~

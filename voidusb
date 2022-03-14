@@ -14,6 +14,13 @@ function depchecker {
 						exit 0
 				fi
 		done
+		if ! command -v xbps-install &> /dev/null; then
+				echo "XBPS not found, using tarball"
+				xbpsins="false"
+		else
+				echo "XBPS found, using XBPS"
+				xbpsins="true"
+		fi
 }
 
 function usbchk {
@@ -40,15 +47,18 @@ function partition {
 		sudo mkfs.f2fs -f -q -O extra_attr,inode_checksum,sb_checksum,compression ${_device}3 #https://wiki.archlinux.org/title/F2FS#Compression, will give us a performance increase and reduce wear on the USB
 }
 
-function tarstrap { #anyone want to add an option to install via XBPS for people who can install xbps?
+function mountusb {
 		mkdir -p void
 		sudo mount -o compress_algorithm=zstd:9,compress_chksum,whint_mode=fs-based,atgc,gc_merge,lazytime ${_device}3 ./void
 		sudo mkdir -p ./void/boot
 		sudo mount ${_device}2 ./void/boot
 		sudo mkdir -p ./void/boot/efi
 		sudo mount ${_device}1 ./void/boot/efi
+}
+
+function tarstrap { #anyone want to add an option to install via XBPS for people who can install xbps? i done it wooooooooooooooooooooooo
 		#install void via rootfs
-		if [ $_libc = glibc ]; then
+		if [ "$_libc" = glibc ]; then
 				tarname=void-x86_64-ROOTFS-20210930.tar.xz
 		else #select musl if glibc is not selected
 				tarname=void-x86_64-musl-ROOTFS-20210930.tar.xz
@@ -57,6 +67,18 @@ function tarstrap { #anyone want to add an option to install via XBPS for people
 		sudo curl -O https://alpha.de.repo.voidlinux.org/live/current/$tarname
 		sudo tar xpf $tarname --xattrs-include='*.*' --numeric-owner #https://wiki.gentoo.org/wiki/Handbook:AMD64/Full/Installation#Unpacking_the_stage_tarball
 		sudo rm $tarname
+}
+
+function xbpsstrap {
+		if [ "$_libc" = "musl" ]; then
+				XBPS_ARCH=x86_64-musl
+				REPO=https://alpha.de.repo.voidlinux.org/current/musl
+		else
+				XBPS_ARCH=x86_64
+				REPO=https://alpha.de.repo.voidlinux.org/current
+		fi
+		xbps-install -S -r ./void -R "$REPO" base-system void-repo-nonfree
+		touch ./void/xbps # the system will check after a chroot to see it was installed with xbps or not
 }
 
 function prepchroot {
@@ -68,7 +90,7 @@ function prepchroot {
 		sudo cp ../voidusb.conf ./tmp/voidusb.conf
 }
 
-function tarchroot { #want this separate in case of XBPS install method
+function tarchroot { # want this separate in case of XBPS install method
 		$ins -Su xbps
 		$ins -u
 		$ins base-system void-repo-nonfree
@@ -76,15 +98,15 @@ function tarchroot { #want this separate in case of XBPS install method
 }
 
 function localisation {
-		if [ "$_libc" = "glibc" ]; then #locale setup
+		if [ "$_libc" = "glibc" ]; then # locale setup
 				echo "${_locale}.UTF-8 UTF-8" >> /etc/default/libc-locales
 				xbps-reconfigure -f glibc-locales
 		fi
 		echo $_hostname > /etc/hostname
-		echo "LANG=${_locale}.UTF-8" > /etc/locale.conf #idk if this has an effect on musl but eh
+		echo "LANG=${_locale}.UTF-8" > /etc/locale.conf # idk if this has an effect on musl but eh
 		ln -sf /usr/share/zoneinfo/$timez /etc/localtime
 		if [ "$_clock" = "NTP" ]; then
-				echo "HARDWARECLOCK=localtime" >> /etc/rc.conf #as a backup
+				echo "HARDWARECLOCK=localtime" >> /etc/rc.conf # as a backup
 				$ins openntpd
 				ln -s /etc/sv/ntpd /var/service
 		elif [ "$_clock" = "localtime" ]; then
@@ -181,7 +203,9 @@ if [ "$1" = "chroot" ]; then
 				usercreation
 		fi
 		echo -e "${grn}Setting up system.${def}"
-		tarchroot
+		if ! rm xbps &> /dev/null; then 
+				tarchroot
+		fi
 		localisation
 		drivers
 		if [ "$_gui" = "true" ]; then
@@ -199,8 +223,15 @@ else
 		echo -e "${grn}Partitioning USB... Password prompt incoming!${def}"
 		partition
 		echo -e "${grn}Partitions prepared."
-		echo -e "Bootstrapping Void Linux tarball...${def}"
-		tarstrap
+		echo -e "Mounting devices...${def}"
+		mountusb
+		if [ "$xbpsins" = "true" ]; then
+				echo -e "${grn}Bootstrapping a Void Linux installation to /dev/${_device}..."
+				xbpsstrap
+		else
+				echo -e "${grn}Bootstrapping Void Linux tarball..."
+				tarstrap
+		fi
 		echo -e "${grn}Generating fstab...${def}"
 		mkfstab
 		echo -e "${grn}Preparing a chroot environment...${def}"
