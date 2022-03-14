@@ -138,12 +138,11 @@ function drivers {
 						$ins mesa-dri-32bit
 				fi
 		else
-				echo -e "${grn}Driver was not chosen correctly, skipping...${def}"
+				echo -e "${grn}Driver was not selected/chosen correctly, skipping...${def}"
 		fi
 }
 
-function setupgui {
-		drivers
+function gui {
 		$ins curl wget lightdm lightdm-gtk3-greeter xorg budgie-desktop tilix nemo elogind xdg-user-dirs-gtk gnome-control-center pipewire wireplumber alsa-pipewire bluez papirus-icon-theme papirus-folders
 		rm /etc/runit/runsvdir/default/dhcpcd #just incase
 		mkdir -p /etc/pipewire
@@ -184,6 +183,10 @@ if [ "$1" = "chroot" ]; then
 		echo -e "${grn}Setting up system.${def}"
 		tarchroot
 		localisation
+		drivers
+		if [ "$_gui" = "true" ]; then
+				gui
+		fi
 		bootloader
 		$ins ${_pkgs} neofetch
 		xbps-reconfigure -fa
