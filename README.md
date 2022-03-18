@@ -23,6 +23,10 @@ git clone --branch stable https://github.com/rangerAMG/voidUSB.git && cd voidUSB
 vim voidusb.conf # or use your text editor of choice, gedit/kate is normally good for newbies
 ./voidusb
 ```
+Or to run just one function (depchecker, usbchk, partition, mountusb, tarstrap, xbpsstrap, prepchroot, tarchroot, localisation, bootloader, mkfstab, shell, usercreation, drivers, gui):
+```
+./voidusb run FUNCTION
+```
 
 ## To do list:
 * Add advanced customisation options
