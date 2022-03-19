@@ -17,6 +17,16 @@ tar
 xz
 ```
 ## Installation/Usage
+### From stable release
+Navigate to the [releases page](https://notabug.org/toukoAMG/voidUSB/releases), and download the source code. Then extract it and edit the config file before running the script. For example:
+```
+wget https://notabug.org/toukoAMG/voidUSB/archive/v1.0-rc1.tar.gz
+tar xf v1.0-rc1.tar.gz
+cd voidusb
+vim voidusb.conf
+./voidusb
+```
+### From git (more recent but potentially less stable)
 It's as simple as running a few commands (and editing a configuration file):
 ```
 git clone --branch stable https://notabug.org/rangerAMG/voidUSB.git && cd voidUSB # or keep on master by removing the --branch stable , however you likely will encounter issues if you do that
