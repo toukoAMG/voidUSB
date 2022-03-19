@@ -99,7 +99,7 @@ function bootloader {
 }
 
 function mkfstab {
-		sudo curl -O -s https://raw.githubusercontent.com/rangerAMG/genfstab/master/genfstab
+		sudo curl -O -s https://raw.githubusercontent.com/toukoAMG/genfstab/master/genfstab
 		sudo chmod +x genfstab
 		sudo bash -c "cd ${_root} && ./void/genfstab -U ./void >> ./void/etc/fstab"
 }
