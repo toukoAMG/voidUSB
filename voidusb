@@ -121,7 +121,7 @@ function bootloader {
 }
 
 function mkfstab {
-		sudo curl -O -s https://raw.githubusercontent.com/rangerAMG/genfstab/master/genfstab
+		sudo curl -O -s https://raw.githubusercontent.com/toukoAMG/genfstab/master/genfstab
 		sudo chmod +x genfstab
 		sudo bash -c "cd ${_root} && ./void/genfstab -U ./void >> ./void/etc/fstab"
 }
@@ -168,13 +168,13 @@ function gui {
 		$ins curl wget lightdm lightdm-gtk3-greeter xorg budgie-desktop tilix nemo elogind xdg-user-dirs-gtk gnome-control-center pipewire wireplumber alsa-pipewire bluez papirus-icon-theme papirus-folders
 		rm /etc/runit/runsvdir/default/dhcpcd #just incase
 		mkdir -p /etc/pipewire
-		curl -0 -s https://raw.githubusercontent.com/rangerAMG/voidUSB/files/pipewire.conf && mv pipewire.conf /etc/pipewire/
-		curl -0 -s https://raw.githubusercontent.com/rangerAMG/voidUSB/files/pipewire.desktop && mv pipewire.desktop /etc/xdg/autostart/
+		curl -0 -s https://raw.githubusercontent.com/toukoAMG/voidUSB/files/pipewire.conf && mv pipewire.conf /etc/pipewire/
+		curl -0 -s https://raw.githubusercontent.com/toukoAMG/voidUSB/files/pipewire.desktop && mv pipewire.desktop /etc/xdg/autostart/
 		services="elogind lightdm bluetoothd NetworkManager dbus"
 		for n in $services; do
 			ln -s /etc/sv/${n} /etc/runit/runsvdir/default/
 		done
-		wget -q https://github.com/rangerAMG/voidUSB/releases/download/v1.0-beta/Juno-ocean-v40.tar.xz # i give up on curl and this file exactly
+		wget -q https://github.com/toukoAMG/voidUSB/releases/download/v1.0-beta/Juno-ocean-v40.tar.xz # i give up on curl and this file exactly
 		tar xpf Juno-ocean-v40.tar.xz -C /usr/share/themes/ && rm Juno-ocean-v40.tar.xz
 		su -c "gsettings set org.gnome.desktop.interface gtk-theme 'Juno-ocean-v40' && gsettings set org.gnome.desktop.wm.preferences theme 'Juno-ocean-v40' && gsettings set org.gnome.desktop.interface icon-theme 'Papirus-Dark'" $_user
 		ln -s /usr/share/fontconfig/conf.avail/70-no-bitmaps.conf /etc/fonts/conf.d/
